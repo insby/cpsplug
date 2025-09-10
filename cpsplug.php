@@ -1,6 +1,6 @@
 <?php
  /**
- * Plugin Name:       CardsPrint Sync – Users, Products, Orders
+ * Plugin Name:       CpsPlug
  * Plugin URI:        https://github.com/insby/cpsplug
  * Description:       Two-way bridge between WooCommerce and the CardsPrint (Elixir) API.
  * Version:           1.0.0
@@ -10,7 +10,7 @@
  * Author URI:        https://spotlight.rs/
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       cardsprint-sync
+ * Text Domain:       cpsplug
  * Domain Path:       /languages
  * WC requires at least: 6.0
  * WC tested up to:   8.3
@@ -159,7 +159,7 @@ add_action('admin_menu', function () {
         'Spotlight Settings',      // page title
         'Spotlight Settings',      // menu title
         'manage_options',   // cap
-        'elixir-sync',      // slug
+        'cardsprint-sync',      // slug
         'elixir_sync_page'  // render func
     );
 });

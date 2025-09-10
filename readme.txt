@@ -1,4 +1,4 @@
-=== CardsPrint Sync ===
+=== CpsPlug ===
 Contributors:      wordpresscps
 Tags:              woocommerce, api, elixir, loyalty, products, orders
 Requires at least: 5.9
@@ -19,7 +19,7 @@ This plugin automatically:
 No manual configuration besides entering your CardsPrint credentials.
 
 == Installation ==
-1. Upload the plugin files to `/wp-content/plugins/cardsprint-sync` or install via the built-in uploader.
+1. Upload the plugin files to `/wp-content/plugins/cpsplug` or install via the built-in uploader.
 2. Activate the plugin through the 'Plugins' screen.
 3. Navigate to **Settings → CardsPrint Sync** and fill in API key, login, password and store code.
 4. Save – data will start syncing immediately.
