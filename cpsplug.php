@@ -1,18 +1,19 @@
 <?php
-/**
- * Plugin Name: CardsPrint Sync – Users, Products, Orders
- * Plugin URI:  https://github.com/danijel-insby/cpsplug
- * Description: Two-way bridge between WooCommerce and the CardsPrint (Elixir) API.
- * Version:     1.0.0
+ /**
+ * Plugin Name:       CardsPrint Sync – Users, Products, Orders
+ * Plugin URI:        https://github.com/insby/cpsplug
+ * Description:       Two-way bridge between WooCommerce and the CardsPrint (Elixir) API.
+ * Version:           1.0.0
  * Requires at least: 5.9
- * Requires PHP: 7.4
- * Author:      Your Name
- * Author URI:  https://spotlight.rs/
- * License:     GPL v2 or later
- * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: cardsprint-sync
+ * Requires PHP:      7.4
+ * Author:            Your Name
+ * Author URI:        https://spotlight.rs/
+ * License:           GPL v2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       cardsprint-sync
+ * Domain Path:       /languages
  * WC requires at least: 6.0
- * WC tested up to: 8.3
+ * WC tested up to:   8.3
  */
 
  if ( ! defined( 'ABSPATH' ) ) {
@@ -139,9 +140,9 @@ function elixir_ensure_token() {
 // AUTH PART -----------------------------------------------------------------------------  
 
 add_action('admin_init', function () {
-    register_setting('elixir_sync_group', 'elixir_api_key',   'sanitize_text_field');
-    register_setting('elixir_sync_group', 'elixir_login',     'sanitize_text_field');
-    register_setting('elixir_sync_group', 'elixir_password'); 
+    register_setting('elixir_sync_group', 'elixir_api_key', 'sanitize_text_field');
+    register_setting('elixir_sync_group', 'elixir_login', 'sanitize_text_field');
+    register_setting('elixir_sync_group', 'elixir_password', 'sanitize_text_field'); 
     register_setting('elixir_sync_group', 'elixir_store_code', 'sanitize_text_field');
 });
 
