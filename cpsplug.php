@@ -233,7 +233,7 @@ function send_product_to_elixir($product_id) {
 
     $token = elixir_ensure_token();
     if (!$token) {
-        _elixir_log('NO TOKEN – aborting');
+        error_log('---- NO TOKEN ----');
         return;
     }
     
