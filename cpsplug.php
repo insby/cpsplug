@@ -171,7 +171,6 @@ add_action('woocommerce_order_status_completed', 'send_order_to_elixir');
 // PRODUCTS PART -----------------------------------------------------------------------------
 
 function send_product_to_elixir($product_id) {
-    error_log('---- PROD TRIGGERED for '.$product_id.' ----');
     $p = wc_get_product($product_id);
     if (!$p) return;
 
@@ -194,7 +193,7 @@ function send_product_to_elixir($product_id) {
             ];
         }
     }
-    error_log('---- PRE BRAND for '.$product_id.' ----');
+
     /* brand (first attribute called “brand”) */
     $brand = [];
     foreach ($p->get_attributes() as $tax => $attr) {
@@ -211,13 +210,13 @@ function send_product_to_elixir($product_id) {
             break;
         }
     }
-    error_log('---- PRE VAT for '.$product_id.' ----');
+
     $vat_percent = 0;
     if (!empty($rates)) {
         $first_rate = array_shift($rates);   // pull the first rate off
         $vat_percent = (float) ($first_rate['rate'] ?? 0);
     }
-    error_log('---- PRE BODY for '.$product_id.' ----');
+
     $body = [
         'products' => [[
             'code'            => (string)$product_id,
@@ -232,12 +231,8 @@ function send_product_to_elixir($product_id) {
     ];
 
     $token = elixir_ensure_token();
-    if (!$token) {
-        error_log('---- NO TOKEN ----');
-        return;
-    }
-    
- 
+    if (!$token) return;
+
     elixir_request('PUT', '/v2/int/products', $body, $token);
 }
 
