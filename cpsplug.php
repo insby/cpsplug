@@ -194,7 +194,7 @@ function send_product_to_elixir($product_id) {
             ];
         }
     }
-
+    error_log('---- PRE BRAND for '.$product_id.' ----');
     /* brand (first attribute called “brand”) */
     $brand = [];
     foreach ($p->get_attributes() as $tax => $attr) {
@@ -211,13 +211,13 @@ function send_product_to_elixir($product_id) {
             break;
         }
     }
-
+    error_log('---- PRE VAT for '.$product_id.' ----');
     $vat_percent = 0;
     if (!empty($rates)) {
         $first_rate = array_shift($rates);   // pull the first rate off
         $vat_percent = (float) ($first_rate['rate'] ?? 0);
     }
-
+    error_log('---- PRE BODY for '.$product_id.' ----');
     $body = [
         'products' => [[
             'code'            => (string)$product_id,
@@ -232,8 +232,12 @@ function send_product_to_elixir($product_id) {
     ];
 
     $token = elixir_ensure_token();
-    if (!$token) return;
-
+    if (!$token) {
+        _elixir_log('NO TOKEN – aborting');
+        return;
+    }
+    
+ 
     elixir_request('PUT', '/v2/int/products', $body, $token);
 }
 
