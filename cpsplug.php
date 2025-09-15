@@ -21,7 +21,7 @@
 }
 
 define('ELIXIR_API_URL', get_option('elixir_spotlight_url'));
-define('ELIXIR_API_KEY', get_option('elixir_api_key'));
+define('ELIXIR_API_URL', get_option('elixir_spotlight_url') ?: 'https://sl-api.spotlight.rs/api');
 
 add_action('profile_update', 'send_user_to_elixir', 10, 2);
 
