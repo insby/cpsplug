@@ -171,6 +171,7 @@ add_action('woocommerce_order_status_completed', 'send_order_to_elixir');
 // PRODUCTS PART -----------------------------------------------------------------------------
 
 function send_product_to_elixir($product_id) {
+    error_log('---- PROD TRIGGERED for '.$product_id.' ----');
     $p = wc_get_product($product_id);
     if (!$p) return;
 
@@ -211,6 +212,12 @@ function send_product_to_elixir($product_id) {
         }
     }
 
+    $vat_percent = 0;
+    if (!empty($rates)) {
+        $first_rate = array_shift($rates);   // pull the first rate off
+        $vat_percent = (float) ($first_rate['rate'] ?? 0);
+    }
+
     $body = [
         'products' => [[
             'code'            => (string)$product_id,
@@ -219,7 +226,7 @@ function send_product_to_elixir($product_id) {
             'name'            => $p->get_name(),
             'price'           => (float)wc_get_price_to_display($p),
             'valid'           => $p->is_in_stock(),
-            'vat_percent'     => (float)WC_Tax::get_rates($p->get_tax_class())[0]['rate'] ?? 0,
+            'vat_percent'     => $vat_percent,
             'attributes'      => array_merge($cats, $brand),
         ]]
     ];
