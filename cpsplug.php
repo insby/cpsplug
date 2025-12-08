@@ -304,7 +304,7 @@ function send_order_to_elixir($order_id) {
             'order_number'       => $barcode,
             'req_benefits'       => $benefits,
             'user_external_ref'  => (string) $user_id,
-            'uuid'               => $uuid,
+            'order_external_ref' => $uuid,
             'user'               => $user_data,
         ]
     ];
