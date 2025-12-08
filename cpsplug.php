@@ -1,8 +1,8 @@
 <?php
  /**
- * Plugin Name:       CpsPlug
+ * Plugin Name:       MySpotlight Integration for WooCommerce
  * Plugin URI:        https://github.com/insby/cpsplug
- * Description:       Two-way bridge between WooCommerce and the CardsPrint (Elixir) API.
+ * Description:       Connect your WooCommerce store with the MySpotlight platform. Automatically synchronize product data, pricing, availability, and orders between systems in real-time. Designed for fast, reliable, and seamless integration — so you can manage your ecommerce from one place
  * Version:           1.0.0
  * Requires at least: 5.9
  * Requires PHP:      7.4
