@@ -261,9 +261,9 @@ function send_order_to_elixir($order_id) {
         $items[] = [
             'price'                 => (float)$item->get_total() / $item->get_quantity(),
             'price_wo_vat'          => $net,
-            'product_code'          => (string)$product->get_id(),
+            'code'                  => (string)$product->get_id(),
             'product_external_ref'  => (string)$product->get_id(),
-            'product_name'          => $product->get_name(),
+            'name'                  => $product->get_name(),
             'promotion'             => false,
             'qty'                   => $item->get_quantity(),
             'vat_amount'            => $vat,
