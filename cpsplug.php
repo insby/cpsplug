@@ -168,6 +168,7 @@ add_action('admin_menu', function () {
 add_action('woocommerce_update_product', 'send_product_to_elixir', 10, 1);
 add_action('woocommerce_order_status_completed', 'send_order_to_elixir');
 add_action('woocommerce_new_order', 'send_order_to_elixir'); 
+add_action('woocommerce_checkout_order_processed', 'send_order_to_elixir', 10, 3);
 
 // PRODUCTS PART -----------------------------------------------------------------------------
 
