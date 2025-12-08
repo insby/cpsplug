@@ -279,6 +279,18 @@ function send_order_to_elixir($order_id) {
         ];
     }
 
+    $user_data = [
+        'external_ref' => (string) $user_id, 
+        'email'        => $o->get_billing_email(),
+        'first_name'   => $o->get_billing_first_name(),
+        'last_name'    => $o->get_billing_last_name(),
+        'phone_number' => $o->get_billing_phone(),
+        'address'      => $o->get_billing_address_1(),
+        'city'         => $o->get_billing_city(),
+        'country'      => $o->get_billing_country(),
+        'postcode'     => $o->get_billing_postcode(),
+    ];
+
     $body = [
         'order' => [
             'calculation_only'   => false,
@@ -292,6 +304,7 @@ function send_order_to_elixir($order_id) {
             'req_benefits'       => $benefits,
             'user_external_ref'  => (string) $user_id,
             'uuid'               => $uuid,
+            'user'               => $user_data,
         ]
     ];
 
