@@ -52,26 +52,52 @@ function send_user_to_elixir($user_id, $old_user_data = null) {
 
 // USER PART -----------------------------------------------------------------------------  
 function elixir_update_user(WP_REST_Request $req) {
-    $body = $req->get_json_params();          // what Elixir sent
-    $email = sanitize_email($body['user']['email'] ?? '');
-    $uid   = email_exists($email);            // WP helper
-    if (!$uid) return new WP_Error('no_user', 'User not found', ['status' => 404]);
+    $body  = $req->get_json_params();
+    $user  = $body['user'] ?? [];
+    $email = sanitize_email($user['email'] ?? '');
+    if (!$email) return new WP_Error('bad_request', 'Missing email', ['status' => 400]);
 
-    // update core fields
-    wp_update_user([
-        'ID'         => $uid,
-        'first_name' => sanitize_text_field($body['user']['first_name'] ?? ''),
-        'last_name'  => sanitize_text_field($body['user']['last_name']  ?? ''),
-    ]);
+    $uid = email_exists($email);
 
-    // update meta fields
-    foreach (['barcode', 'phone_number', 'address', 'city', 'gender', 'parent_name'] as $k) {
-        if (isset($body['user'][$k]))
-            update_user_meta($uid, $k, sanitize_text_field($body['user'][$k]));
+    if (!$uid) {
+        // Create WP user
+        $username = sanitize_user($user['username'] ?? strstr($email, '@', true), true);
+        if (username_exists($username)) {
+            $username .= '_' . wp_generate_password(4, false, false);
+        }
+
+        $random_password = wp_generate_password(20, true, true);
+
+        $uid = wp_insert_user([
+            'user_login' => $username,
+            // 'user_pass'  => $random_password,
+            'user_email' => $email,
+            'first_name' => sanitize_text_field($user['first_name'] ?? ''),
+            'last_name'  => sanitize_text_field($user['last_name'] ?? ''),
+            'role'       => 'customer', // WooCommerce customer role
+        ]);
+
+        if (is_wp_error($uid)) return $uid;
+
+        // Optional: send "set password" email instead of sharing passwords
+        // wp_new_user_notification($uid, null, 'user');
+    } else {
+        // update core fields
+        wp_update_user([
+            'ID'         => $uid,
+            'first_name' => sanitize_text_field($user['first_name'] ?? ''),
+            'last_name'  => sanitize_text_field($user['last_name'] ?? ''),
+        ]);
     }
 
-    return ['success' => true];
+    // update meta fields (works for both create & update)
+    foreach (['barcode', 'phone_number', 'address', 'city', 'gender', 'parent_name'] as $k) {
+        if (isset($user[$k])) update_user_meta($uid, $k, sanitize_text_field($user[$k]));
+    }
+
+    return ['success' => true, 'wp_user_id' => (int)$uid];
 }
+
 
 // USER PART -----------------------------------------------------------------------------  
 
