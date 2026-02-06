@@ -196,7 +196,7 @@ function elixir_ensure_token() {
 }
 
 function elixir_permission_check(WP_REST_Request $req) {
-    $secret = get_option('elixir_webhook_secret');
+    $secret = get_option('elixir_api_key');
     $sent   = $req->get_header('x-elixir-secret');
     return $secret && is_string($sent) && hash_equals($secret, $sent);
 }
@@ -209,7 +209,6 @@ add_action('admin_init', function () {
     register_setting('elixir_sync_group', 'elixir_password', 'sanitize_text_field'); 
     register_setting('elixir_sync_group', 'elixir_store_code', 'sanitize_text_field');
     register_setting('elixir_sync_group', 'elixir_spotlight_url', 'esc_url_raw'); 
-    register_setting('elixir_sync_group', 'elixir_webhook_secret', 'sanitize_text_field');
 });
 
 add_action('rest_api_init', function () {
@@ -417,10 +416,6 @@ function elixir_sync_page() { ?>
                 <th><label for="elixir_spotlight_url">Spotlight URL</label></th>
                 <td><input name="elixir_spotlight_url" id="elixir_spotlight_url" type="url"
                             value="<?php echo esc_url(get_option('elixir_spotlight_url')); ?>" class="regular-text" /> </td></tr>
-
-            <tr><th><label for="elixir_webhook_secret">Webhook secret</label></th>
-                <td><input name="elixir_webhook_secret" id="elixir_webhook_secret" type="text"
-                            value="<?php echo esc_attr(get_option('elixir_webhook_secret')); ?>" class="regular-text" /></td></tr>
         </table>
         <?php submit_button(); ?>
     </form>
