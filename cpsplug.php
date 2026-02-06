@@ -52,52 +52,84 @@ function send_user_to_elixir($user_id, $old_user_data = null) {
 
 // USER PART -----------------------------------------------------------------------------  
 function elixir_update_user(WP_REST_Request $req) {
-    $body  = $req->get_json_params();
-    $user  = $body['user'] ?? [];
-    $email = sanitize_email($user['email'] ?? '');
-    if (!$email) return new WP_Error('bad_request', 'Missing email', ['status' => 400]);
+    $body = $req->get_json_params();
+    $u    = $body['user'] ?? [];
 
-    $uid = email_exists($email);
+    $email = sanitize_email($u['email'] ?? '');
+    $ext   = sanitize_text_field($u['external_ref'] ?? '');
 
+    if (!$email && !$ext) {
+        return new WP_Error('bad_request', 'Missing email or external_ref', ['status' => 400]);
+    }
+
+    // 1) find user by external_ref (stored in user meta)
+    $uid = 0;
+    if ($ext) {
+        $q = new WP_User_Query([
+            'meta_key'   => 'elixir_external_ref',
+            'meta_value' => $ext,
+            'number'     => 1,
+            'fields'     => 'ID'
+        ]);
+        $ids = $q->get_results();
+        if (!empty($ids)) $uid = (int)$ids[0];
+    }
+
+    // 2) fallback: find by email
+    if (!$uid && $email) {
+        $uid = (int) email_exists($email);
+    }
+
+    // 3) create if missing
     if (!$uid) {
-        // Create WP user
-        $username = sanitize_user($user['username'] ?? strstr($email, '@', true), true);
-        if (username_exists($username)) {
-            $username .= '_' . wp_generate_password(4, false, false);
-        }
-
-        $random_password = wp_generate_password(20, true, true);
+        $username = sanitize_user($u['username'] ?? strstr($email, '@', true), true);
+        if (username_exists($username)) $username .= '_' . wp_generate_password(4, false, false);
 
         $uid = wp_insert_user([
             'user_login' => $username,
-            // 'user_pass'  => $random_password,
+            'user_pass'  => wp_generate_password(24, true, true), // generated, not shared
             'user_email' => $email,
-            'first_name' => sanitize_text_field($user['first_name'] ?? ''),
-            'last_name'  => sanitize_text_field($user['last_name'] ?? ''),
-            'role'       => 'customer', // WooCommerce customer role
+            'first_name' => sanitize_text_field($u['first_name'] ?? ''),
+            'last_name'  => sanitize_text_field($u['last_name'] ?? ''),
+            'role'       => 'customer',
         ]);
 
         if (is_wp_error($uid)) return $uid;
 
-        // Optional: send "set password" email instead of sharing passwords
+        // Optional: invite user to set password
         // wp_new_user_notification($uid, null, 'user');
     } else {
         // update core fields
         wp_update_user([
             'ID'         => $uid,
-            'first_name' => sanitize_text_field($user['first_name'] ?? ''),
-            'last_name'  => sanitize_text_field($user['last_name'] ?? ''),
+            'user_email' => $email ?: get_userdata($uid)->user_email,
+            'first_name' => sanitize_text_field($u['first_name'] ?? ''),
+            'last_name'  => sanitize_text_field($u['last_name'] ?? ''),
         ]);
     }
 
-    // update meta fields (works for both create & update)
-    foreach (['barcode', 'phone_number', 'address', 'city', 'gender', 'parent_name'] as $k) {
-        if (isset($user[$k])) update_user_meta($uid, $k, sanitize_text_field($user[$k]));
+    // 4) persist external_ref link
+    if ($ext) update_user_meta($uid, 'elixir_external_ref', $ext);
+
+    // 5) Woo billing mapping (recommended)
+    $map = [
+        'phone_number' => 'billing_phone',
+        'address'      => 'billing_address_1',
+        'city'         => 'billing_city',
+        'country'      => 'billing_country',
+        'postcode'     => 'billing_postcode',
+    ];
+    foreach ($map as $from => $to) {
+        if (isset($u[$from])) update_user_meta($uid, $to, sanitize_text_field($u[$from]));
+    }
+
+    // 6) your custom meta (optional)
+    foreach (['barcode', 'gender', 'parent_name'] as $k) {
+        if (isset($u[$k])) update_user_meta($uid, $k, sanitize_text_field($u[$k]));
     }
 
     return ['success' => true, 'wp_user_id' => (int)$uid];
 }
-
 
 // USER PART -----------------------------------------------------------------------------  
 
@@ -163,6 +195,12 @@ function elixir_ensure_token() {
     return false;
 }
 
+function elixir_permission_check(WP_REST_Request $req) {
+    $secret = get_option('elixir_webhook_secret');
+    $sent   = $req->get_header('x-elixir-secret');
+    return $secret && is_string($sent) && hash_equals($secret, $sent);
+}
+
 // AUTH PART -----------------------------------------------------------------------------  
 
 add_action('admin_init', function () {
@@ -171,6 +209,15 @@ add_action('admin_init', function () {
     register_setting('elixir_sync_group', 'elixir_password', 'sanitize_text_field'); 
     register_setting('elixir_sync_group', 'elixir_store_code', 'sanitize_text_field');
     register_setting('elixir_sync_group', 'elixir_spotlight_url', 'esc_url_raw'); 
+    register_setting('elixir_sync_group', 'elixir_webhook_secret', 'sanitize_text_field');
+});
+
+add_action('rest_api_init', function () {
+    register_rest_route('elixir/v1', '/user', [
+        'methods'  => 'POST',
+        'callback' => 'elixir_update_user',
+        'permission_callback' => 'elixir_permission_check',
+    ]);
 });
 
 add_action('rest_api_init', function () {
@@ -370,6 +417,10 @@ function elixir_sync_page() { ?>
                 <th><label for="elixir_spotlight_url">Spotlight URL</label></th>
                 <td><input name="elixir_spotlight_url" id="elixir_spotlight_url" type="url"
                             value="<?php echo esc_url(get_option('elixir_spotlight_url')); ?>" class="regular-text" /> </td></tr>
+
+            <tr><th><label for="elixir_webhook_secret">Webhook secret</label></th>
+                <td><input name="elixir_webhook_secret" id="elixir_webhook_secret" type="text"
+                            value="<?php echo esc_attr(get_option('elixir_webhook_secret')); ?>" class="regular-text" /></td></tr>
         </table>
         <?php submit_button(); ?>
     </form>
