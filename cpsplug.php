@@ -28,6 +28,10 @@ add_action('profile_update', 'send_user_to_elixir', 10, 2);
 function send_user_to_elixir($user_id, $old_user_data = null) {
     $user = get_userdata($user_id);
 
+    if (defined('REST_REQUEST') && REST_REQUEST) {
+        return;
+    }
+
      $first_name = !empty($user->first_name)
         ? $user->first_name
         : 'Customer';
@@ -156,7 +160,7 @@ function elixir_update_user(WP_REST_Request $req) {
 
     // password set
     $password = $u['password'] ?? null;
-    
+
     if (!empty($password)) {
         wp_set_password($password, $uid);
     }
