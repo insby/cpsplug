@@ -24,6 +24,7 @@ define('ELIXIR_API_URL', get_option('elixir_spotlight_url') ?: 'https://sl-api.s
 define('ELIXIR_API_KEY', get_option('elixir_api_key'));
 
 add_action('profile_update', 'send_user_to_elixir', 10, 2);
+add_action('password_reset', 'elixir_sync_password_to_backend', 10, 2);
 
 function send_user_to_elixir($user_id, $old_user_data = null) {
     $user = get_userdata($user_id);
@@ -168,6 +169,25 @@ function elixir_update_user(WP_REST_Request $req) {
     return ['success' => true, 'wp_user_id' => (int)$uid];
 }
 
+function elixir_sync_password_to_backend($user, $new_pass) {
+    // Prevent loop if triggered via REST
+    if (defined('REST_REQUEST') && REST_REQUEST) {
+        return;
+    }
+
+    $payload = [
+        'user' => [
+            'external_ref' => (string) $user->ID,
+            'email'        => $user->user_email,
+            'password'     => $new_pass,
+        ]
+    ];
+
+    $token = elixir_ensure_token();
+    if (!$token) return;
+
+    elixir_request('PUT', '/v2/int/user', $payload, $token);
+}
 // USER PART -----------------------------------------------------------------------------  
 
 
