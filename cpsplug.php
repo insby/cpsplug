@@ -28,16 +28,40 @@ add_action('profile_update', 'send_user_to_elixir', 10, 2);
 function send_user_to_elixir($user_id, $old_user_data = null) {
     $user = get_userdata($user_id);
 
+     $first_name = !empty($user->first_name)
+        ? $user->first_name
+        : 'Customer';
+
+    $last_name = !empty($user->last_name)
+        ? $user->last_name
+        : 'Customer';
+
     $core = [
         'external_ref'  => (string) $user->ID,
         'email'   => $user->user_email,
         'username'   => $user->user_login,
-        'first_name'   => $user->first_name,
-        'last_name'    => $user->last_name
+        'first_name'   => $first_name,
+        'last_name'    => $last_name
     ];
 
     $all_meta = get_user_meta($user_id);
-    $meta = array_map(fn($v) => maybe_unserialize($v[0]), $all_meta);
+    $meta = [];
+
+    foreach ($all_meta as $key => $value) {
+    // ❌ Skip unwanted prefixes
+        if (
+            str_starts_with($key, '_wc_') ||
+            str_starts_with($key, 'wc_') ||
+            str_starts_with($key, 'wp_') ||
+            str_starts_with($key, '_wp_') ||
+            str_starts_with($key, 'alg_wc_')
+        ) {
+            continue;
+        }
+
+    $meta[$key] = maybe_unserialize($value[0]);
+    }
+
     unset($meta['wp_capabilities']);
     unset($meta['wp_user_level']); 
     $meta['phone_number'] = $meta['billing_phone'];
