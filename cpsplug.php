@@ -82,6 +82,7 @@ function elixir_update_user(WP_REST_Request $req) {
 
     $email = sanitize_email($u['email'] ?? '');
     $ext   = sanitize_text_field($u['external_ref'] ?? '');
+    $password = $u['password'] ?? null;
 
     if (!$email && !$ext) {
         return new WP_Error('bad_request', 'Missing email or external_ref', ['status' => 400]);
@@ -151,6 +152,13 @@ function elixir_update_user(WP_REST_Request $req) {
     // 6) your custom meta (optional)
     foreach (['barcode', 'gender', 'parent_name'] as $k) {
         if (isset($u[$k])) update_user_meta($uid, $k, sanitize_text_field($u[$k]));
+    }
+
+    // password set
+    $password = $u['password'] ?? null;
+    
+    if (!empty($password)) {
+        wp_set_password($password, $uid);
     }
 
     return ['success' => true, 'wp_user_id' => (int)$uid];
@@ -244,13 +252,13 @@ add_action('rest_api_init', function () {
     ]);
 });
 
-add_action('rest_api_init', function () {
-    register_rest_route('elixir/v1', '/user', [
-        'methods'  => 'POST',
-        'callback' => 'elixir_update_user',
-        'permission_callback' => '__return_true' // guard later
-    ]);
-});
+// add_action('rest_api_init', function () {
+//     register_rest_route('elixir/v1', '/user', [
+//         'methods'  => 'POST',
+//         'callback' => 'elixir_update_user',
+//         'permission_callback' => '__return_true' // guard later
+//     ]);
+// });
 
 add_action('admin_menu', function () {
     add_options_page(
