@@ -64,6 +64,7 @@ function send_user_to_elixir($user_id, $old_user_data = null) {
 
     unset($meta['wp_capabilities']);
     unset($meta['wp_user_level']); 
+    unset($meta['first_name'], $meta['last_name']);
     $meta['phone_number'] = $meta['billing_phone'];
     $payload = ['user' => array_merge($core, $meta)];
 
