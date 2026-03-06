@@ -276,6 +276,14 @@ add_action('rest_api_init', function () {
     ]);
 });
 
+add_action('rest_api_init', function () {
+    register_rest_route('elixir/v1', '/auth', [
+        'methods'  => 'POST',
+        'callback' => 'elixir_auth_user',
+        'permission_callback' => 'elixir_permission_check',
+    ]);
+});
+
 // add_action('rest_api_init', function () {
 //     register_rest_route('elixir/v1', '/user', [
 //         'methods'  => 'POST',
@@ -298,6 +306,49 @@ add_action('woocommerce_update_product', 'send_product_to_elixir', 10, 1);
 add_action('woocommerce_order_status_completed', 'send_order_to_elixir');
 add_action('woocommerce_new_order', 'send_order_to_elixir'); 
 add_action('woocommerce_checkout_order_processed', 'send_order_to_elixir', 10, 3);
+
+
+// AUTH PART -----------------------------------------------------------------------------
+
+function elixir_auth_user(WP_REST_Request $req) {
+    $body = $req->get_json_params();
+
+    $email    = sanitize_text_field($body['email'] ?? '');
+    $password = $body['password'] ?? '';
+
+    if (!$email || !$password) {
+        return new WP_Error(
+            'missing_fields',
+            'Email and password are required',
+            ['status' => 400]
+        );
+    }
+
+    // Allow login via email or username
+    $user = wp_authenticate($email, $password);
+
+    if (is_wp_error($user)) {
+        return new WP_Error(
+            'invalid_credentials',
+            'Invalid credentials',
+            ['status' => 401]
+        );
+    }
+
+    return [
+        'success' => true,
+        'user' => [
+            'wp_user_id'   => (int) $user->ID,
+            'external_ref' => (string) $user->ID,
+            'email'        => $user->user_email,
+            'username'     => $user->user_login,
+            'first_name'   => $user->first_name,
+            'last_name'    => $user->last_name
+        ]
+    ];
+}
+
+// AUTH PART -----------------------------------------------------------------------------
 
 // PRODUCTS PART -----------------------------------------------------------------------------
 
