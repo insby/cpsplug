@@ -33,13 +33,16 @@ function send_user_to_elixir($user_id, $old_user_data = null) {
         return;
     }
 
-     $first_name = !empty($user->first_name)
-        ? $user->first_name
-        : 'Customer';
+    $first_name =
+        get_user_meta($user_id, 'first_name', true) ?:
+        get_user_meta($user_id, 'billing_first_name', true) ?:
+        'Customer';
 
-    $last_name = !empty($user->last_name)
-        ? $user->last_name
-        : 'Customer';
+    $last_name =
+        get_user_meta($user_id, 'last_name', true) ?:
+        get_user_meta($user_id, 'billing_last_name', true) ?:
+        'Customer';
+
 
     $core = [
         'external_ref'  => (string) $user->ID,
