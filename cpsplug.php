@@ -509,20 +509,21 @@ function send_order_to_elixir($order_id) {
     // ---- line items ----
    $items = [];
 
-    foreach ($o->get_items() as $item) {
+   foreach ($o->get_items() as $item) {
         $product = $item->get_product();
-        $price = (float)$item->get_subtotal() / $item->get_quantity();
-        $vat   = (float)$item->get_subtotal_tax() / $item->get_quantity();
+        $price_wo_vat = (float)$item->get_subtotal() / $item->get_quantity();
+        $vat          = (float)$item->get_subtotal_tax() / $item->get_quantity();
+        $price        = $price_wo_vat + $vat;
 
         $items[] = [
-            'price'                => $price,
-            'price_wo_vat'         => $price - $vat,
             'code'                 => (string)$product->get_id(),
-            'product_external_ref' => (string)$product->get_id(),
             'name'                 => $product->get_name(),
+            'price'                => round($price, 2),
+            'price_wo_vat'         => round($price_wo_vat, 2),
+            'product_external_ref' => (string)$product->get_id(),
             'promotion'            => false,
             'qty'                  => $item->get_quantity(),
-            'vat_amount'           => $vat
+            'vat_amount'           => round($vat, 2),
         ];
     }
 
