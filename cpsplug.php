@@ -26,6 +26,77 @@ define('ELIXIR_API_KEY', get_option('elixir_api_key'));
 add_action('profile_update', 'send_user_to_elixir', 10, 2);
 add_action('password_reset', 'elixir_sync_password_to_backend', 10, 2);
 
+add_filter('woocommerce_get_shop_coupon_data', 'elixir_dynamic_coupon', 10, 2);
+
+// BENEFITS PART ------------------------------------------------------------------------------------------
+
+function elixir_dynamic_coupon($data, $code) {
+
+    // get customer email
+    $email = '';
+
+    if (is_user_logged_in()) {
+        $user = wp_get_current_user();
+        $email = $user->user_email;
+    }
+
+    if (!$email && WC()->customer) {
+        $email = WC()->customer->get_billing_email();
+    }
+
+    if (!$email) return false;
+
+    $token = elixir_ensure_token();
+    if (!$token) return false;
+
+    $endpoint = '/v2/int/user/benefits/available?email=' . urlencode($email);
+
+    $response = elixir_request('GET', $endpoint, null, $token);
+
+    if (is_wp_error($response)) return false;
+
+    $body = json_decode(wp_remote_retrieve_body($response), true);
+
+    if (empty($body['data'])) return false;
+
+    $coupon = null;
+
+    foreach ($body['data'] as $c) {
+        if (!empty($c['coupon_code']) && $c['coupon_code'] === $code) {
+            $coupon = $c;
+            break;
+        }
+    }
+
+    if (!$coupon) return false;
+
+    // expiration check
+    if (!empty($coupon['expiration_date'])) {
+        if (strtotime($coupon['expiration_date']) < time()) {
+            return false;
+        }
+    }
+
+    // determine discount type
+    if ($coupon['coupon_type'] === 'PERCENT') {
+        $discount_type = 'percent';
+    } elseif ($coupon['coupon_type'] === 'AMOUNT') {
+        $discount_type = 'fixed_cart';
+    } else {
+        return false;
+    }
+
+    return [
+        'id' => $coupon['benefit_id'],
+        'discount_type' => $discount_type,
+        'amount' => $coupon['coupon_value'],
+        'individual_use' => false,
+        'usage_limit' => $coupon['coupon_unlimited'] ? '' : 1,
+    ];
+}
+
+// --------------------------------------------------------------------------------------------------------
+
 function send_user_to_elixir($user_id, $old_user_data = null) {
     $user = get_userdata($user_id);
 
