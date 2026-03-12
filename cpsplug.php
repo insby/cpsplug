@@ -507,21 +507,19 @@ function send_order_to_elixir($order_id) {
     $uuid      = $o->get_order_key();                          // WC gives us one
 
     // ---- line items ----
-    $items = [];
+   $items = [];
+
     foreach ($o->get_items() as $item) {
         $product = $item->get_product();
-        $net     = (float)$item->get_subtotal() / $item->get_quantity();
-        $vat     = (float)$item->get_subtotal_tax() / $item->get_quantity();
+
         $items[] = [
-            'price'                 => (float)$item->get_total() / $item->get_quantity(),
-            'price_wo_vat'          => $net,
-            'code'                  => (string)$product->get_id(),
-            'product_external_ref'  => (string)$product->get_id(),
-            'name'                  => $product->get_name(),
-            'promotion'             => false,
-            'qty'                   => $item->get_quantity(),
-            'vat_amount'            => $vat,
-            'vat_perc'              => (float)WC_Tax::get_rates($product->get_tax_class())[0]['rate'] ?? 0,
+            'price'                => (float)$item->get_total() / $item->get_quantity(),
+            'price_wo_vat'         => (float)$item->get_subtotal() / $item->get_quantity(),
+            'code'                 => (string)$product->get_id(),
+            'product_external_ref' => (string)$product->get_id(),
+            'name'                 => $product->get_name(),
+            'promotion'            => false,
+            'qty'                  => $item->get_quantity(),
         ];
     }
 
