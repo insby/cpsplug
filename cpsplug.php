@@ -546,6 +546,15 @@ function send_order_to_elixir($order_id) {
         'postcode'     => $o->get_billing_postcode(),
     ];
 
+    $benefits = [];
+
+    foreach ($o->get_coupon_codes() as $code) {
+        $benefits[] = [
+            'benefit_type' => 'COUPON',
+            'coupon_code'  => $code
+        ];
+    }
+
     $body = [
         'order' => [
             'calculation_only'   => false,
@@ -559,6 +568,7 @@ function send_order_to_elixir($order_id) {
             'req_benefits'       => $benefits,
             'user_external_ref'  => (string) $user_id,
             'order_external_ref' => $uuid,
+            'req_benefits'       => $benefits,
             'user'               => $user_data,
         ]
     ];
